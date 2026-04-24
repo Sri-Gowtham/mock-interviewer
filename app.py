@@ -69,35 +69,42 @@ def get_feedback(answer):
 if "index" not in st.session_state:
     st.session_state.index = 0
 
+if "feedback" not in st.session_state:
+    st.session_state.feedback = ""
+
 questions = questions_db[role]
 
 # ==============================
 # INTERVIEW FLOW
 # ==============================
 if st.session_state.index < len(questions):
+
     q = questions[st.session_state.index]
     st.subheader(f"Q{st.session_state.index + 1}: {q}")
 
     answer = st.text_area("Your Answer")
 
     if st.button("Submit Answer"):
+
         try:
-            # Gemini API Feedback
             response = model.generate_content(
                 f"Give short interview feedback for this answer:\n{answer}"
             )
-
-            st.success("🤖 AI Feedback:")
-            st.write(response.text)
+            st.session_state.feedback = response.text
 
         except:
-            # Fallback feedback
-            st.warning("⚠ API issue → showing basic feedback")
-            feedback = get_feedback(answer)
-            st.write(feedback)
+            st.session_state.feedback = get_feedback(answer)
 
-        st.session_state.index += 1
-        st.rerun()
+    # ✅ SHOW FEEDBACK
+    if st.session_state.feedback:
+        st.success("🤖 Feedback:")
+        st.write(st.session_state.feedback)
+
+        # NEXT BUTTON
+        if st.button("Next Question"):
+            st.session_state.index += 1
+            st.session_state.feedback = ""
+            st.rerun()
 
 else:
     st.success("🎉 Interview Completed!")
